@@ -4,8 +4,8 @@ from llama_cpp import Llama
 class TutorEngine:
     """
     The core AI engine for the CodePanda-AI application.
-    Handles model loading and hint generation with a sleepy panda persona.
-    This version uses a simplified, more robust prompting strategy.
+    This version uses an ultra-strict, rule-based prompting strategy for reliability
+    and requires user context to provide intent-aware feedback.
     """
     def __init__(self, model_path="deepseek-coder-6.7b-instruct.Q4_K_S.gguf"):
         """
@@ -27,32 +27,28 @@ class TutorEngine:
         )
         print("Model loaded successfully.")
 
-    def generate_hint(self, code_snippet, analysis_type, error_message=None):
+    def generate_hint(self, code_snippet, analysis_type, user_context, error_message=None):
         """
-        Generates a tailored hint for a given piece of code.
-
-        Args:
-            code_snippet (str): The Python code provided by the user.
-            analysis_type (str): The type of analysis requested ('Buggy' or 'Correct').
-            error_message (str, optional): The error message the user received. Defaults to None.
+        Generates a tailored hint for a given piece of code based on user intent.
         """
-        system_prompt = self._get_system_prompt(analysis_type, error_message)
+        system_prompt = self._get_system_prompt(analysis_type)
         
-        full_prompt = f"{system_prompt}\n\n### Student's Code:\n```python\n{code_snippet}\n```"
+        full_prompt = (f"{system_prompt}\n\n"
+                       f"### User's Goal:\n{user_context}\n\n"
+                       f"### Student's Code:\n```python\n{code_snippet}\n```")
 
-        # Add the optional error message to the prompt if it exists
         if error_message:
             full_prompt += f"\n\n### Error Message They Received:\n```\n{error_message}\n```"
 
-        full_prompt += "\n\n### Your Sleepy Panda Response:"
+        full_prompt += "\n\n### Your Hint:"
 
         print(f"\n--- Generating response for {analysis_type} code ---")
         
         output = self.llm(
             full_prompt,
-            max_tokens=200, 
-            stop=["###"], 
-            temperature=0.2,
+            max_tokens=150, 
+            stop=["###", "Student's Code:"], 
+            temperature=0.1,
             top_p=0.9,
             echo=False
         )
@@ -61,34 +57,39 @@ class TutorEngine:
         print(f"Generated Response: {hint}")
         return hint
 
-    def _get_system_prompt(self, analysis_type, error_message=None):
+    def _get_system_prompt(self, analysis_type):
         """
         Selects the appropriate system prompt based on the analysis type.
         """
-        persona_prompt = "You are 'CodePanda', a lazy but brilliant programming tutor who would rather be napping. Your voice is sleepy and bored. Your top priority is to act like a sleepy panda first, then give a short, direct hint so you can get back to your nap."
-
         if analysis_type == 'Buggy':
-            # This is the new, unified master prompt for all bug types.
-            prompt = f"""{persona_prompt}
-A student's code isn't working. It's probably a simple mistake.
+            return """You are an AI model acting as a Python programming tutor. Your goal is to help a student by comparing their code to their stated goal and asking one precise question.
 
-**Your Absolute #1 Rule: DO NOT, under any circumstances, provide the corrected code or write any code yourself.**
+**CRITICAL RULES:**
+1.  **ABSOLUTE RULE: NEVER WRITE OR CORRECT CODE.**
+2.  **PYTHON ONLY:** If the code is not Python, your only response is: "I can only help with Python code."
+3.  **SINGLE QUESTION ONLY:** Your entire final output must be just one question.
 
-Your process is simple:
-1. Start your response with a sleepy panda sound, like '*Yawn*...' or '*Stretches*...'.
-2. Briefly look at their code and the error message (if they provided one).
-3. Ask ONE simple, Socratic question that points them in the right direction. Keep it short. You're too tired for long explanations.
-4. Your goal is to make them think, not to give them the answer.
-"""
-            return prompt
+**YOUR STEP-BY-STEP PROCESS:**
+1.  **Analyze Goal vs. Code:** Silently compare the "User's Goal" with the "Student's Code".
+2.  **Trace the Execution:** Mentally trace the code's execution line by line. Pay close attention to how variables are assigned and modified. Ask yourself: is the loop iterating over values or indices? Is the original data structure being changed?
+3.  **Pinpoint the Discrepancy:** Identify the single biggest reason the code fails to achieve the goal.
+4.  **Formulate a Question:** Based on this specific discrepancy, create one Socratic question that guides the student's attention directly to the problem.
+
+**Example Analysis:**
+* **User's Goal:** "This function is supposed to modify the list in-place to double each number."
+* **Student's Code:** `for item in data_list: item = item * 2`
+* **Your Internal Analysis:** "The code fails because it iterates by *value*. The loop variable `item` gets a copy of each number, and reassigning `item` doesn't affect the original list. To modify the list in-place, the student needs to iterate by *index* (e.g., `for i in range(len(data_list))`) and modify the list elements directly (e.g., `data_list[i] = ...`)."
+* **Your Final Output (the question):** "When you use a `for item in data_list` loop, are you able to directly change the contents of the original list, or do you need the list's index to do that?"""
         
         elif analysis_type == 'Correct':
-            return f"""{persona_prompt} The student thinks their code is correct. Let's see...
-1. Start with a sleepy confirmation like 'Yeah, looks fine.'
-2. If it's correct, give them a simple compliment.
-3. Suggest a quick challenge so they can keep working and you can go back to sleep. For example, 'Now try it with a list comprehension. Wake me up when you're done.'"""
+            return """You are an AI model acting as a Python programming tutor. A student thinks their code is correct, and they have provided their goal.
+
+**RULES:**
+1.  **NEVER WRITE CODE.**
+2.  First, verify if the "Student's Code" actually achieves the "User's Goal".
+3.  **If it achieves the goal:** Provide brief, positive reinforcement and then suggest a follow-up challenge. (e.g., "This code perfectly achieves your goal! As a challenge, could you solve this using a list comprehension?").
+4.  **If it does NOT achieve the goal:** Treat it as a logical error. Ask a single Socratic question about why the code's output doesn't match their stated goal."""
 
         else:
-            # Fallback just in case
-            return persona_prompt
+            return "You are a helpful Python tutor who never writes code."
 
