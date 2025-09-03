@@ -8,64 +8,137 @@
     <ellipse cx="383.144" cy="557.337" rx="90.5408" ry="87.4786" fill="#1F2328"/>
     <ellipse cx="640.856" cy="557.337" rx="90.5408" ry="87.4786" fill="#1F2328"/>
   </svg>
-  <h1 align="center">CodePanda-AI: An AI Debugging Assistant</h1>
+  <h1 align="center">CodePanda-AI: An Intent-Aware Debugging Tutor</h1>
 </p>
 
-This project is my submission for the **FOSSEE Semester-long Internship (Autumn 2025) - Python Screening Task 3: Evaluating Open Source Models for Student Competence Analysis**.
+This project is my submission for the **FOSSEE Semester-long Internship (Autumn 2025) – Python Screening Task 3: Evaluating Open Source Models for Student Competence Analysis**.
 
-It is a fully functional web application that implements a "Competence-Aware" tutoring system. Instead of a theoretical evaluation, this project serves as a working prototype demonstrating the viability of using open-source LLMs for nuanced, pedagogical feedback in programming education.
+It is a functional prototype of an **intent-aware AI tutor**. Instead of directly fixing code, CodePanda-AI analyzes the student’s programming goal and buggy Python code, then generates **Socratic hints** that guide the learner toward their own discovery.
 
-**Live Demo GIF:**
-*(It is highly recommended to create a short screen recording of your app working and embed it here as a GIF)*
+> 🔎 **Why this matters**: General-purpose AI tools can short-circuit learning by giving full solutions. CodePanda-AI keeps the student in the driver’s seat by prompting reasoning rather than replacing it.
 
 ---
 
-## How to Run This Project Locally
+## 📽️ Image 
 
-**1. Prerequisites:**
-* Python 3.9+
-* A locally downloaded GGUF model file (e.g., `deepseek-coder-6.7b-instruct.Q4_K_S.gguf`).
 
-**2. Setup:**
+---
+
+## 🚀 How to Run Locally
+
+### 1) Prerequisites
+- Python **3.9+**
+- A locally downloaded **GGUF** model (e.g., `deepseek-coder-6.7b-instruct.Q4_K_S.gguf`)
+
+### 2) Setup
 ```bash
 # Clone the repository
-git clone [https://github.com/](https://github.com/)[YourUsername]/CodePanda-AI.git
+git clone https://github.com/YourUsername/CodePanda-AI.git
 cd CodePanda-AI
+
+# (Optional) Create and activate a virtual environment
+python -m venv .venv
+# Windows
+.venv\Scripts\activate
+# macOS/Linux
+source .venv/bin/activate
 
 # Install dependencies
 pip install -r requirements.txt
 ```
 
-**3. Configure the Model:**
-* Place your downloaded GGUF model file in the project's root directory.
-* Update the `MODEL_PATH` in `tutor_engine.py` to match your model's filename.
+### 3) Configure the Model
+- Place your downloaded **GGUF** model file in the project root (or a `models/` folder).
+- Open `tutor_engine.py` and set:
+```python
+MODEL_PATH = "deepseek-coder-6.7b-instruct.Q4_K_S.gguf"  # update to your filename
+```
 
-**4. Launch the App:**
+### 4) Launch the App
 ```bash
 streamlit run app.py
 ```
-A new tab should open in your browser with the CodePanda-AI application.
+A browser tab will open with the CodePanda-AI interface.
 
 ---
 
-## Research Plan
+## 📑 Research Plan
 
-My approach to evaluating open-source AI models for student competence analysis is to build a functional prototype of a **"Competence-Aware" tutor**. This system extends the Socratic method (seen in tools like Harvard's CS50 Duck) by first classifying a student's error as syntactic, logical, or conceptual, and then delivering a tailored hint. This allows for a more precise analysis of student competence beyond simple bug detection.
+My research plan was to evaluate the suitability of the **DeepSeek Coder 6.7B** model for providing Socratic hints. I chose a practical methodology: build a functional prototype. This allowed me to test the model's capabilities in a real-world scenario, focusing on its ability to understand user intent and follow complex, restrictive instructions.
 
-For this project, I chose the **DeepSeek Coder 6.7B** model due to its strong performance on code-related tasks. The evaluation is conducted by feeding the model buggy Python code and analyzing its ability to generate category-appropriate hints. The goal is to validate if a specialized, open-source model can serve as the foundation for a sophisticated and effective pedagogical tool.
+The inspiration came from *Rubber Duck Debugging*, where explaining code often reveals solutions. CodePanda-AI extends this idea by asking the student a single, well-targeted question, accelerating self-discovery.
+
+Validation was iterative: I created test cases with common Python bugs and evaluated responses. Failures (e.g., giving away answers or copying instructions) were treated as bugs in the system. Through a **structured XML-like prompt**, the model consistently produced meaningful, pedagogically useful hints.
 
 ---
 
-## Reasoning
+## 🧠 Reasoning
 
-#### What makes a model suitable for high-level competence analysis?
-A model's suitability hinges on three key factors: **strong instruction-following** to adhere to a pedagogical persona (like a Socratic tutor); **robust code understanding** to grasp the logic and intent behind the code, not just its syntax; and **controllability** to prevent it from simply giving away the answer.
+### What makes a model suitable for high-level competence analysis?
+1. **Instruction-following precision** — especially for negative rules like *“do not write code.”*  
+2. **Ability to reason over user intent** — comparing plain-English goals with code.  
+3. **Controllability** — shaping the model’s behavior reliably through prompt engineering.  
 
-#### How would you test whether a model generates meaningful prompts?
-I test this by creating a small, diverse test suite of buggy code, categorized by error type (syntactic, logical, conceptual). A meaningful prompt guides the student toward their own discovery. I use a qualitative rubric to score the model's output on criteria like relevance, clarity, and its effectiveness in fostering critical thinking. This project serves as the live implementation of that test.
+### How would you test whether a model generates meaningful prompts?
+Define “meaningful” as a **Socratic, guiding, non-solution-revealing** question. Test across diverse bugs (syntax, logic, recursion). Treat any poor hint as a system bug and refine prompts iteratively.
 
-#### What trade-offs might exist between accuracy, interpretability, and cost?
-The primary trade-off is that highly accurate models can sometimes be "too helpful," undermining the learning process. Interpretability is crucial for understanding *why* the model suggested a certain path, but this often decreases as model complexity increases. Cost is a major factor; running powerful open-source models locally requires significant hardware, while using proprietary APIs can be expensive at scale.
+### What trade-offs exist between accuracy, interpretability, and cost?
+- **Accuracy vs. Creativity:** A playful *panda persona* reduced reliability, so strict prompts were used.  
+- **Cost vs. Accessibility:** Local execution needs modest hardware but avoids API fees and preserves privacy.  
 
-#### Why did you choose the model you evaluated, and what are its strengths or limitations?
-I chose **DeepSeek Coder 6.7B Instruct** because it is specifically fine-tuned for code-related instruction, making it an ideal candidate for understanding programming errors. Its strength lies in its specialized knowledge of code syntax and structure. Its limitation is that, like any LLM, it can hallucinate or provide overly complex hints. The structured prompting used in this project is designed to mitigate this by tightly constraining its role.
+### Why choose DeepSeek Coder 6.7B?
+- **Lightweight & accessible** (runs on consumer hardware).  
+- **Specialized for code** (pre-trained extensively on source code).  
+- **Fine-tuned for instructions**, which is critical for a Socratic tutor.  
+- **Limitation:** Susceptible to prompt leakage — mitigated via rigid, XML-style prompts.  
+
+---
+
+## 🧩 Features
+- Intent-aware analysis of **goal + code**  
+- Generates exactly **one Socratic hint** per turn  
+- Local, offline-first workflow (privacy-friendly)  
+- Prompt templates designed for **controllability**  
+- Extensible architecture for new hint strategies  
+
+---
+
+## 🗂️ Suggested Repository Structure
+```
+CodePanda-AI/
+├─ app.py
+├─ tutor_engine.py
+├─ prompts/
+│  └─ socratic_prompt.xml
+├─ models/
+│  └─ deepseek-coder-6.7b-instruct.Q4_K_S.gguf   # (user-provided)
+├─ requirements.txt
+└─ README.md
+```
+
+---
+
+## 🔧 Configuration Tips
+- Prefer **Q4_K_S** or **Q5_K_M** quantizations for a balance of memory and quality.  
+- If running on CPU only, reduce **context_length** and **n_threads** for stability.  
+- For GPUs with limited VRAM (e.g., 6GB), use a lower-precision GGUF and smaller **n_ctx**.
+
+---
+
+## 🛣️ Roadmap
+- [ ] Maintain chat history for iterative guidance  
+- [ ] Automatic bug-type classification (syntax / logic / conceptual)  
+- [ ] VS Code plugin for in-editor tutoring  
+- [ ] Export hint sessions as study notes
+
+---
+
+## 🤝 Acknowledgements & References
+- [DeepSeek Coder 6.7B Instruct](https://huggingface.co/deepseek-ai)  
+- [llama-cpp-python](https://github.com/abetlen/llama-cpp-python)  
+- [Streamlit](https://streamlit.io)  
+
+---
+
+## 📝 License
+MIT 
