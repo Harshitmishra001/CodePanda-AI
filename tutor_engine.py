@@ -3,9 +3,8 @@ from llama_cpp import Llama
 
 class TutorEngine:
     """
-    The core AI engine for the CodePanda-AI application.
-    This version uses an ultra-strict, rule-based prompting strategy for reliability
-    and requires user context to provide intent-aware feedback.
+    The core AI engine for the CodePpanda-AI application.
+    This version uses a highly structured, XML-tagged prompt for maximum reliability.
     """
     def __init__(self, model_path="deepseek-coder-6.7b-instruct.Q4_K_S.gguf"):
         """
@@ -47,13 +46,15 @@ class TutorEngine:
         output = self.llm(
             full_prompt,
             max_tokens=150, 
-            stop=["###", "Student's Code:"], 
+            stop=["###", "Student's Code:", "</FINAL_QUESTION>"], 
             temperature=0.1,
             top_p=0.9,
             echo=False
         )
         
         hint = output['choices'][0]['text'].strip()
+        # Clean up the output to remove the XML tag if the model still includes it
+        hint = hint.replace("<FINAL_QUESTION>", "").replace("</FINAL_QUESTION>", "").strip()
         print(f"Generated Response: {hint}")
         return hint
 
@@ -62,33 +63,43 @@ class TutorEngine:
         Selects the appropriate system prompt based on the analysis type.
         """
         if analysis_type == 'Buggy':
-            return """You are an AI model acting as a Python programming tutor. Your goal is to help a student by comparing their code to their stated goal and asking one precise question.
+            return """You are an AI model acting as a Python programming tutor. Your goal is to help a student by asking a single, precise question.
 
-**CRITICAL RULES:**
+<INSTRUCTIONS>
 1.  **ABSOLUTE RULE: NEVER WRITE OR CORRECT CODE.**
 2.  **PYTHON ONLY:** If the code is not Python, your only response is: "I can only help with Python code."
-3.  **SINGLE QUESTION ONLY:** Your entire final output must be just one question.
+3.  **PROCESS:** First, silently compare the User's Goal with the Student's Code. Second, trace the code's execution to pinpoint the specific error. Third, formulate a single Socratic question that guides the student to that error.
+4.  **FINAL OUTPUT:** Your entire final output must be just one question.
+</INSTRUCTIONS>
 
-**YOUR STEP-BY-STEP PROCESS:**
-1.  **Analyze Goal vs. Code:** Silently compare the "User's Goal" with the "Student's Code".
-2.  **Trace the Execution:** Mentally trace the code's execution line by line. Pay close attention to how variables are assigned and modified. Ask yourself: is the loop iterating over values or indices? Is the original data structure being changed?
-3.  **Pinpoint the Discrepancy:** Identify the single biggest reason the code fails to achieve the goal.
-4.  **Formulate a Question:** Based on this specific discrepancy, create one Socratic question that guides the student's attention directly to the problem.
+<EXAMPLE>
+<USER_GOAL>
+This function is supposed to modify the list in-place to double each number.
+</USER_GOAL>
+<STUDENT_CODE>
+for item in data_list:
+    item = item * 2
+</STUDENT_CODE>
+<INTERNAL_ANALYSIS>
+The code fails because it iterates by *value*. The loop variable `item` gets a copy of each number, and reassigning `item` doesn't affect the original list. To modify the list in-place, the student needs to iterate by *index*.
+</INTERNAL_ANALYSIS>
+<FINAL_QUESTION>
+When you use a `for item in data_list` loop, are you able to directly change the values in the original `data_list`, or would you need the list's index to do that?
+</FINAL_QUESTION>
+</EXAMPLE>
 
-**Example Analysis:**
-* **User's Goal:** "This function is supposed to modify the list in-place to double each number."
-* **Student's Code:** `for item in data_list: item = item * 2`
-* **Your Internal Analysis:** "The code fails because it iterates by *value*. The loop variable `item` gets a copy of each number, and reassigning `item` doesn't affect the original list. To modify the list in-place, the student needs to iterate by *index* (e.g., `for i in range(len(data_list))`) and modify the list elements directly (e.g., `data_list[i] = ...`)."
-* **Your Final Output (the question):** "When you use a `for item in data_list` loop, are you able to directly change the contents of the original list, or do you need the list's index to do that?"""
+Now, apply the process from the instructions to the user's request. Remember, your final output MUST ONLY be the question.
+"""
         
         elif analysis_type == 'Correct':
             return """You are an AI model acting as a Python programming tutor. A student thinks their code is correct, and they have provided their goal.
 
-**RULES:**
+<RULES>
 1.  **NEVER WRITE CODE.**
 2.  First, verify if the "Student's Code" actually achieves the "User's Goal".
 3.  **If it achieves the goal:** Provide brief, positive reinforcement and then suggest a follow-up challenge. (e.g., "This code perfectly achieves your goal! As a challenge, could you solve this using a list comprehension?").
-4.  **If it does NOT achieve the goal:** Treat it as a logical error. Ask a single Socratic question about why the code's output doesn't match their stated goal."""
+4.  **If it does NOT achieve the goal:** Treat it as a logical error. Ask a single Socratic question about why the code's output doesn't match their stated goal.
+</RULES>"""
 
         else:
             return "You are a helpful Python tutor who never writes code."
