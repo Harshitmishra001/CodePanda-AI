@@ -21,6 +21,7 @@ It is a functional prototype of an **intent-aware AI tutor**. Instead of directl
 
 ## 📽️ Image 
 
+<img width="1920" height="1080" alt="Code1" src="https://github.com/user-attachments/assets/3ff9ab70-7141-4416-959e-8d4d4b579ec7" />
 
 ---
 
@@ -33,7 +34,7 @@ It is a functional prototype of an **intent-aware AI tutor**. Instead of directl
 ### 2) Setup
 ```bash
 # Clone the repository
-git clone https://github.com/YourUsername/CodePanda-AI.git
+git clone https://github.com/Harshitmishra001/CodePanda-AI.git
 cd CodePanda-AI
 
 # (Optional) Create and activate a virtual environment
@@ -95,21 +96,6 @@ My choice of DeepSeek Coder 6.7B Instruct was strategic and based on three main 
 - Local, offline-first workflow (privacy-friendly)  
 - Prompt templates designed for **controllability**  
 - Extensible architecture for new hint strategies  
-
----
-
-## 🗂️ Suggested Repository Structure
-```
-CodePanda-AI/
-├─ app.py
-├─ tutor_engine.py
-├─ prompts/
-│  └─ socratic_prompt.xml
-├─ models/
-│  └─ deepseek-coder-6.7b-instruct.Q4_K_S.gguf   # (user-provided)
-├─ requirements.txt
-└─ README.md
-```
 
 ---
 
